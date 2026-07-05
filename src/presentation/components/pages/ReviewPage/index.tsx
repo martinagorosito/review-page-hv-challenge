@@ -11,6 +11,7 @@ import { submitReview } from '@application/use-cases/submitReview'
 import { canSubmitReview } from '@application/use-cases/canSubmitReview'
 import { MockReviewRepository } from '@infrastructure/repositories/MockReviewRepository'
 import { observability } from '@shared/observability'
+import { applyScenario } from '@shared/dev/scenario'
 import type { Review } from '@domain/entities/review.types'
 import type { PdfViewerHandle } from '@presentation/components/organisms/PdfViewer/PdfViewer.types'
 import type { ReviewPageProps } from './ReviewPage.types'
@@ -94,9 +95,10 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewId }) => {
     )
   }
 
+  const displayReview: Review = { ...review, issues: applyScenario(review.issues) }
   const userInitials =
     `${review.user.firstName.charAt(0)}${review.user.lastName.charAt(0)}`.toUpperCase()
-  const canSubmit = canSubmitReview(review)
+  const canSubmit = canSubmitReview(displayReview)
 
   return (
     <ReviewLayout
@@ -104,7 +106,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewId }) => {
         <>
           <AppHeader userInitials={userInitials} />
           <DocSubHeader
-            review={review}
+            review={displayReview}
             canSubmit={canSubmit}
             isSubmitting={isPending}
             onSubmit={handleSubmit}
@@ -114,7 +116,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewId }) => {
       pdfPanel={<PdfViewer ref={pdfViewerRef} pdfUrl={review.document.pdfUrl} />}
       issuesPanel={
         <IssueList
-          issues={review.issues}
+          issues={displayReview.issues}
           onNavigateToPage={(page) => { pdfViewerRef.current?.navigateToPage(page) }}
           onSubmit={handleSubmit}
         />
