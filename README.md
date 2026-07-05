@@ -2,6 +2,8 @@
 
 A senior frontend take-home challenge: build a document review interface where an inspector can load a PDF, inspect flagged issues, and submit a review.
 
+**Live demo**: [review-page-hv-challenge.vercel.app](https://review-page-hv-challenge.vercel.app/)
+
 ---
 
 ## AI-assisted development
@@ -19,7 +21,7 @@ The design was based on the provided Figma spec:
 
 ```bash
 pnpm install
-pnpm dev          # http://localhost:5173
+pnpm dev          # http://localhost:3000
 ```
 
 ```bash
@@ -29,6 +31,21 @@ pnpm type-check             # TypeScript check
 pnpm lint                   # ESLint
 pnpm build                  # production build
 ```
+
+---
+
+## Dev scenarios
+
+A `?scenario=` query param filters the displayed issues without touching the mock data.
+
+| URL | What it shows |
+|-----|---------------|
+| `/?scenario=no-issues` | Empty issue list — submit enabled immediately |
+| `/?scenario=minors-only` | Only minor issues — submit enabled |
+| `/?scenario=majors-only` | Only major issues — submit blocked |
+| `/?scenario=criticals-only` | Only critical issues — submit blocked |
+| `/?scenario=can-submit` | Minor issues only — submit enabled |
+| `/` (no param) | All issues from mock data (default) |
 
 ---
 
@@ -98,7 +115,7 @@ Dependency rule (strict): `domain ← application ← infrastructure / presentat
 
 ---
 
-## Bonus points addressed
+## Criteria explained 
 
 **Clean Architecture**
 Strict layer separation with enforced dependency direction. Domain has zero framework dependencies. Swapping mock → real HTTP, or mock → real Datadog, is a single-file change.

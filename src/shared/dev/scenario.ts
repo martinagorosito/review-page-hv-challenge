@@ -4,7 +4,6 @@ const SCENARIOS = ['all', 'no-issues', 'minors-only', 'majors-only', 'criticals-
 type Scenario = (typeof SCENARIOS)[number]
 
 function getScenario(): Scenario {
-  if (!import.meta.env.DEV) return 'all'
   const param = new URLSearchParams(window.location.search).get('scenario')
   if (param && (SCENARIOS as readonly string[]).includes(param)) return param as Scenario
   return 'all'
