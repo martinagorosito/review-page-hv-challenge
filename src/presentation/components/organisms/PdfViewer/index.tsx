@@ -255,7 +255,7 @@ export const PdfViewer = forwardRef<PdfViewerHandle, PdfViewerProps>(
               wrapper.style.height = `${String(viewport.height)}px`
             }
 
-            const renderTask = page.render({ canvasContext: ctx, viewport })
+            const renderTask = page.render({ canvasContext: ctx, viewport, canvas })
             renderTasksRef.current.set(pageNum, renderTask)
             await renderTask.promise
 

@@ -69,6 +69,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewId }) => {
         })
       }
     })
+    return Promise.resolve()
   }
 
   if (submitted && review && submittedAt) {

@@ -24,7 +24,7 @@ export const HVTypography: FC<HVTypographyProps> = ({
   children,
   ...props
 }) => {
-  const Tag = (as ?? defaultElements[variant] ?? 'span') as React.ElementType
+  const Tag = (as ?? defaultElements[variant ?? 'base'] ?? 'span') as React.ElementType
   return (
     <Tag className={clsx(typographyStyles({ variant, color }), className)} {...props}>
       {children}

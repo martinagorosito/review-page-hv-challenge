@@ -1,6 +1,4 @@
 import { type FC, useTransition } from 'react'
-import { HVButton } from '@presentation/components/atoms/HVButton'
-import { HVTypography } from '@presentation/components/atoms/HVTypography'
 import { IssueCard } from '@presentation/components/molecules/IssueCard'
 import { IssueSectionHeader } from '@presentation/components/molecules/IssueSectionHeader'
 import { SeveritySummaryChips } from '@presentation/components/molecules/SeveritySummaryChips'
