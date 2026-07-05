@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { submitReview } from './submitReview'
+import { ReviewSubmitError } from '@domain/entities/errors'
 import type { ReviewRepository } from '@domain/repositories/ReviewRepository'
 
 const makeRepository = (overrides?: Partial<ReviewRepository>): ReviewRepository => ({
@@ -21,11 +22,23 @@ describe('submitReview', () => {
     await expect(submitReview(repository)('review-1')).resolves.toBeUndefined()
   })
 
-  it('propagates repository errors', async () => {
-    const error = new Error('Submit failure')
+  it('wraps repository errors in ReviewSubmitError', async () => {
+    const cause = new Error('Submit failure')
     const repository = makeRepository({
-      submit: vi.fn().mockRejectedValue(error),
+      submit: vi.fn().mockRejectedValue(cause),
     })
-    await expect(submitReview(repository)('review-1')).rejects.toThrow('Submit failure')
+    await expect(submitReview(repository)('review-1')).rejects.toThrow(ReviewSubmitError)
+  })
+
+  it('preserves the original error as cause', async () => {
+    const cause = new Error('Submit failure')
+    const repository = makeRepository({
+      submit: vi.fn().mockRejectedValue(cause),
+    })
+    try {
+      await submitReview(repository)('review-1')
+    } catch (err) {
+      expect((err as ReviewSubmitError).cause).toBe(cause)
+    }
   })
 })

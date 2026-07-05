@@ -1,8 +1,8 @@
 # HomeVision — Review Page Challenge
 
-A senior frontend take-home challenge: build a document review interface where an inspector can load a PDF, inspect flagged issues, and submit a review.
-
 **Live demo**: [review-page-hv-challenge.vercel.app](https://review-page-hv-challenge.vercel.app/)
+
+A document review interface for property inspectors. An inspector opens a flagged property report, reads the PDF side-by-side with a structured issue list, and submits the review once all critical and major issues are resolved. The interface enforces the submission gate — the submit action is disabled until no blocking issues remain.
 
 ---
 
@@ -90,28 +90,27 @@ Dependency rule (strict): `domain ← application ← infrastructure / presentat
 
 ## Assumptions made
 
-- `reviewId` is hardcoded to `"review-1"` — no routing required for challenge scope
-- Mock repository serves static fixture data from `reviewMockData.json` — no real API
-- PDF is loaded from `public/example_document.pdf` — no dynamic document URL
-- Observability logs to console — sufficient for evaluation; interface is fully wired for real Datadog
-- PDF page count is bounded — render-all-pages approach is appropriate for short documents
-- No authentication layer — user identity is not part of the challenge scope
+- **`reviewId` is hardcoded to `"review-1"`** — no routing layer is implemented. In production this would come from URL params, enabling deep linking, browser history, and multi-review navigation.
+- **Mock repository serves static fixture data** — `MockReviewRepository` returns `reviewMockData.json` with no network calls. Replacing it with an HTTP client is a single-file swap; the rest of the codebase is written to the `ReviewRepository` interface.
+- **PDF loaded from `public/example_document.pdf`** — no dynamic document URL. In production the URL would come from the review payload returned by the API.
+- **Observability logs to console** — the full `ObservabilityService` interface is wired throughout (`trackEvent`, `trackError`, `startSpan`/`endSpan`). Replacing the mock with real Datadog RUM is a single-file change in `src/shared/observability/datadog.mock.ts`.
+- **All PDF pages rendered upfront** — required for browser-native CMD+F search to work across the full document. For very large PDFs, a virtualized approach with a custom search index would be needed. See `DECISIONS.md` for the full tradeoff.
+- **No authentication layer** — user identity is not part of the challenge scope. In production, auth would gate the route and supply user identity to `observability.setUserContext`.
 
 ---
 
 ## What is missing before production
 
-| Gap | What to do |
-|-----|-----------|
-| Real API client | Replace `MockReviewRepository` with an HTTP implementation. The swap is one file — the rest of the codebase is written to the `ReviewRepository` interface. |
-| Routing | Add React Router or Next.js. Extract `reviewId` from URL params in `ReviewPage`. |
-| Real Datadog | Replace `src/shared/observability/datadog.mock.ts` with `@datadog/browser-rum` + `@datadog/browser-logs`. Env vars needed: `VITE_DD_APPLICATION_ID`, `VITE_DD_CLIENT_TOKEN`, `VITE_DD_SITE`. |
-| Auth | Add an authentication layer. Wire `observability.setUserContext(userId)` on session start. |
-| Error boundary | Add a React error boundary at page level to catch render errors and report via `trackError`. |
-| Failed fetch UX | Currently shows a loading state that never resolves on fetch error. Add user-facing error state. |
-| Performance | Lazy-load `ReviewPage` + code-split `PdfViewer` — pdfjs-dist is large and should not block the initial bundle. |
-| E2E tests | Add Playwright: document load → PDF render → issue review → submit. |
-| CI/CD | GitHub Actions running `lint` + `type-check` + `test:coverage` on every PR, failing if coverage drops below 80%. |
+| Gap | File(s) to change | Notes |
+|-----|-------------------|-------|
+| Real API client | `src/infrastructure/repositories/` | Replace `MockReviewRepository` with an HTTP client. Interface stays the same — swap is isolated to this layer. |
+| Routing | `src/main.tsx`, `ReviewPage` | Add React Router or Next.js. Extract `reviewId` from URL params instead of hardcoding. |
+| Real Datadog | `src/shared/observability/datadog.mock.ts` | Drop-in replacement for `@datadog/browser-rum` + `@datadog/browser-logs`. Needs: `VITE_DD_APPLICATION_ID`, `VITE_DD_CLIENT_TOKEN`, `VITE_DD_SITE`. |
+| Auth | Route layer + `ReviewPage` | Gate the route and call `observability.setUserContext(userId)` on session start. |
+| Failed fetch UX | `ReviewPage` | Loading state never resolves on error. Add a user-facing error state with retry. |
+| Bundle size | `src/main.tsx` | Code-split `PdfViewer` with `React.lazy` — pdfjs-dist is ~1.2 MB and should not block the initial bundle. |
+| E2E tests | — | Add Playwright: document load → PDF render → issue navigation → submit. |
+| CI/CD | `.github/workflows/` | GitHub Actions: `lint` + `type-check` + `test:coverage` on every PR. Fail if coverage drops below 80%. |
 
 ---
 

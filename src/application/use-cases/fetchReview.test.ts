@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { fetchReview } from './fetchReview'
+import { ReviewFetchError } from '@domain/entities/errors'
 import type { ReviewRepository } from '@domain/repositories/ReviewRepository'
 import type { Review } from '@domain/entities/review.types'
 
@@ -34,11 +35,23 @@ describe('fetchReview', () => {
     expect(result).toEqual(mockReview)
   })
 
-  it('propagates repository errors', async () => {
-    const error = new Error('Repository failure')
+  it('wraps repository errors in ReviewFetchError', async () => {
+    const cause = new Error('Repository failure')
     const repository = makeRepository({
-      getById: vi.fn().mockRejectedValue(error),
+      getById: vi.fn().mockRejectedValue(cause),
     })
-    await expect(fetchReview(repository)('review-1')).rejects.toThrow('Repository failure')
+    await expect(fetchReview(repository)('review-1')).rejects.toThrow(ReviewFetchError)
+  })
+
+  it('preserves the original error as cause', async () => {
+    const cause = new Error('Repository failure')
+    const repository = makeRepository({
+      getById: vi.fn().mockRejectedValue(cause),
+    })
+    try {
+      await fetchReview(repository)('review-1')
+    } catch (err) {
+      expect((err as ReviewFetchError).cause).toBe(cause)
+    }
   })
 })
